@@ -1,0 +1,11 @@
+id,name,age,department,salary,city
+1,Alice,30,Engineering,70000,New York
+2,Bob,25,Marketing,50000,Los Angeles
+3,Charlie,35,Engineering,80000,Chicago
+4,Diana,28,Human Resources,60000,San Francisco
+5,Eve,40,Engineering,90000,Boston
+6,Frank,29,Marketing,55000,New York
+7,Grace,32,Engineering,72000,Seattle
+8,Hank,27,Human Resources,58000,Chicago
+9,Ivy,33,Marketing,51000,Los Angeles
+10,Jack,31,Engineering,75000,Boston

@@ -2,33 +2,41 @@
 from fastapi import FastAPI, HTTPException, Query, Request,requests
 from typing import Optional
 import pandas as pd
-app = FastAPI()
-
-# data = pd.read_csv("testData.csv")
-data = pd.read_csv("random_data.csv")
 import os
 from dotenv import load_dotenv
+
+app = FastAPI()
+
+#importing the data
+data = pd.read_csv("random_data.csv")
+
+#loading api key
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
-print(f"API_KEY: {API_KEY}")
+
+#home page
 @app.get("/")
 def home():
     return {"hello":"world"}
 
+#data endpoints to get all data
 @app.get("/data") # test passed
 def get_data():
     return data.to_dict(orient="records") # dict in python is json
 
-# basic features
-
 # filter data by column
-
 # testing : http://127.0.0.1:8000/data/filter?column=author&value=dua
 # http://127.0.0.1:8000/data/filter?column=author&value=dua
+'''
+    the filter endpoint below works by filtering the data based on the column and value provided in the request.
+    If no matching records are found, it returns a message indicating that no matching records were found.
+    Otherwise, it returns the filtered data as a list of dictionaries.
+
+'''
 @app.get("/data/filter") # test passed
 def filter_data(column: str, value: str):
     filtered_data = data[data[column] == value]
-    if filtered_data.empty:
+    if filtered_data.empty or column not in data.columns:
         return {"message": "No matching records found"}
     return filtered_data.to_dict(orient="records")
 
@@ -37,16 +45,29 @@ def filter_data(column: str, value: str):
 # testing : http://127.0.0.1:8000/data/paginate?limit=5&offset=0
 # testing : http://127.0.0.1:8000/data/paginate?limit=5&offset=5
 # testing : http://127.0.0.1:8000//data/paginate?limit=5&offset=100
+'''
+    Paginations is used to display a subset of data from a larger dataset.
+    The limit parameter specifies the number of records to be returned per page.
+    The offset parameter specifies the starting index of the records to be returned.
+    here function/method takes 2 inputs integers limit and offset
+'''
 @app.get("/data/paginate") # test passed
 # def get_data_by_page(page_number: int, page_size: int):
 def get_data_by_page(limit:int = 10, offset: int = 0):
     paginated_data = data[offset:offset+ limit]
     return paginated_data.to_dict(orient="records")
-#http://127.0.0.1:8000/data/query?api_key=API_KEY&department=Marketing&city=New%20York
 
 
 # http://127.0.0.1:8000/data/secure?api_key=rishav1439
 # testing : http://127.0.0.1:8000/data/secure?api_key=rishav1439
+'''
+    the secure endpoint below works by validating the API key provided in the request.
+    If the API key is invalid, it raises an HTTPException with a status code of 401 and a detail message indicating that the API key is invalid.
+    Otherwise, it returns the data as a list of dictionaries.
+    Query parameters are used to pass the API key as a parameter to the endpoint.
+    ... is a special syntax in Python that allows you to pass a variable number of arguments to a function.
+    Here function/method takes 1 input api_key
+'''
 
 @app.get("/data/secure") # test passed
 def get_secure_data(api_key: str = Query(...)):
@@ -61,6 +82,11 @@ def get_secure_data(api_key: str = Query(...)):
 # print(API_KEY)
 #http://127.0.0.1:8000/data/query?api_key=rishav1439&department=Marketing&city=New%20York
 #http://127.0.0.1:8000/data/query?api_key=rishav1439&author=dua&language=japanese
+'''
+    the query endpoint below works by validating the API key provided in the request.
+    Here it takes 2 inputs api_key and request(which is initially none but later used to extract the query parameters)
+    It will return data as per user's query
+'''
 @app.get("/data/query") # test passed
 def query_data(
     api_key: Optional[str] = Query(None),  # Make API key optional

@@ -4,8 +4,22 @@ from typing import Optional
 import pandas as pd
 import os
 from dotenv import load_dotenv
+from pydantic import BaseModel
+# from passlib.context import CryptContext
+from passlib.context import CryptContext
 
 app = FastAPI()
+registered_data = []
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+class user(BaseModel):
+    name:str
+    email:str
+    password:str
+
+class loginReq(BaseModel):
+    email:str
+    password:str
 
 #importing the data
 data = pd.read_csv("random_data.csv")
@@ -17,7 +31,13 @@ API_KEY = os.getenv("API_KEY")
 #home page
 @app.get("/")
 def home():
-    return {"hello":"world"}
+    return {"message":"Welcome to my data API project!"}
+
+#about page
+@app.get("/about")
+def about_project():
+    return {"message":"This is a project to serve a csv data as an API"}
+
 
 #data endpoints to get all data
 @app.get("/data") # test passed
@@ -116,3 +136,28 @@ def test_get_data():
     response = requests.get(url)
     assert response.status_code == 200
     assert isinstance(response.json(), list)  # Verify it returns a list of records
+
+# get user by email
+def get_user_by_email(email: str):
+    for users in registered_data:
+        if users["email"]==email:
+            return users
+    return None
+
+
+@app.post("/register")
+def register_user(user:user):
+    if get_user_by_email(user.email):
+        raise HTTPException(status_code=400,detail="User already exists")
+    
+    hashed_password = pwd_context.hash(user.password)
+    registered_data.append({"name":user.name,"email":user.email,"password":hashed_password})
+    return {"message": "User registered successfully"}
+
+
+@app.post("/login")
+def login_user(login_req: loginReq):
+    users = get_user_by_email(login_req.email)
+    if not users or not pwd_context.verify(login_req.password,users["password"]):
+        raise HTTPException(status_code=401,detail="Invalid credentials")
+    return {"Message":"Login successful"}

@@ -4,8 +4,8 @@ from faker import Faker
 
 fake = Faker()
 
-def generate_data(num):
-    data = []
+def generate_data(num): # method to generate random data 
+    data = [] # array to store data
     for _ in range(num):
         row = {
             "author": random.choice(["dua","gracey","ipsitaa","camila"]),
@@ -17,6 +17,6 @@ def generate_data(num):
         data.append(row)
     return data
 
-random_data = generate_data(50)
-df = pd.DataFrame(random_data)
-df.to_csv("random_data.csv", index=False)
+random_data = generate_data(50) # generate 50 random data
+df = pd.DataFrame(random_data) # convert to dataframe
+df.to_csv("random_data.csv", index=False) # save to csv

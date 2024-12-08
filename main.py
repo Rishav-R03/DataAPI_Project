@@ -1,12 +1,16 @@
 # creating a basic api
-from fastapi import FastAPI, HTTPException, Query, Request,requests
+from fastapi import FastAPI, HTTPException, Query, Request,requests,File,UploadFile
 from typing import Optional
 import pandas as pd
 import os
+import preprocess_data
 from dotenv import load_dotenv
 from pydantic import BaseModel
 # from passlib.context import CryptContext
 from passlib.context import CryptContext
+from fastapi import  File, UploadFile
+from fastapi.responses import StreamingResponse
+from io import StringIO, BytesIO
 
 app = FastAPI()
 registered_data = []
@@ -161,3 +165,32 @@ def login_user(login_req: loginReq):
     if not users or not pwd_context.verify(login_req.password,users["password"]):
         raise HTTPException(status_code=401,detail="Invalid credentials")
     return {"Message":"Login successful"}
+
+@app.post("/process_csv")
+async def process_csv(file: UploadFile = File(...)):
+    """
+    Endpoint to upload and preprocess a CSV file.
+    """
+    # Read the uploaded file
+    try:
+        contents = await file.read()
+        df = pd.read_csv(StringIO(contents.decode('utf-8')))
+
+        # Preprocessing: Example steps (customize as needed)
+        df.dropna(inplace=True)  # Remove rows with missing values
+        df.drop_duplicates(inplace=True)  # Remove duplicate rows
+        df = df.rename(columns=lambda x: x.strip())  # Strip column names of extra spaces
+
+        # Convert back to CSV
+        output = BytesIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+
+        # Return the processed CSV as a response
+        return StreamingResponse(
+            output, 
+            media_type="text/csv", 
+            headers={"Content-Disposition": f"attachment; filename=cleaned_{file.filename}"}
+        )
+    except Exception as e:
+        return {"error": str(e)}

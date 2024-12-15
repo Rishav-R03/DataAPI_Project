@@ -11,7 +11,7 @@ from passlib.context import CryptContext
 from fastapi import  File, UploadFile
 from fastapi.responses import StreamingResponse
 from io import StringIO, BytesIO
-
+import random
 app = FastAPI()
 registered_data = []
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -165,6 +165,14 @@ def login_user(login_req: loginReq):
     if not users or not pwd_context.verify(login_req.password,users["password"]):
         raise HTTPException(status_code=401,detail="Invalid credentials")
     return {"Message":"Login successful"}
+
+@app.get("/generateAPIKey")
+def generate_api_key():
+    letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    user_key = "".join(random.choice(letters) for _ in range(32))
+    print(user_key)
+
+generate_api_key()
 
 @app.post("/process_csv")
 async def process_csv(file: UploadFile = File(...)):

@@ -1,9 +1,17 @@
 # creating a basic api
-from fastapi import FastAPI, HTTPException, Query, Request,requests,File,UploadFile
+from fastapi import FastAPI, HTTPException,Depends, Query, Request,requests,File,UploadFile
 from typing import Optional
 import pandas as pd
 import os
-import preprocess_data
+import schemas
+import schemas
+from passlib.hash import bcrypt
+import models
+from sqlalchemy.orm import Session
+from models import User
+from database import Base, engine, SessionLocal
+# import preprocess_data
+from schemas import user, loginReq
 from dotenv import load_dotenv
 from pydantic import BaseModel
 # from passlib.context import CryptContext
@@ -12,19 +20,14 @@ from fastapi import  File, UploadFile
 from fastapi.responses import StreamingResponse
 from io import StringIO, BytesIO
 import random
-app = FastAPI()
-registered_data = []
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-class user(BaseModel):
-    name:str
-    email:str
-    password:str
-
-class loginReq(BaseModel):
-    email:str
-    password:str
-
+Base.metadata.create_all(engine)
+def get_session():
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+app=FastAPI()
 #importing the data
 data = pd.read_csv("random_data.csv")
 
@@ -142,29 +145,30 @@ def test_get_data():
     assert isinstance(response.json(), list)  # Verify it returns a list of records
 
 # get user by email
-def get_user_by_email(email: str):
-    for users in registered_data:
-        if users["email"]==email:
-            return users
-    return None
 
+def get_hashed_password(password):
+    return bcrypt.hash(password)
 
 @app.post("/register")
-def register_user(user:user):
-    if get_user_by_email(user.email):
-        raise HTTPException(status_code=400,detail="User already exists")
-    
-    hashed_password = pwd_context.hash(user.password)
-    registered_data.append({"name":user.name,"email":user.email,"password":hashed_password})
-    return {"message": "User registered successfully"}
+def register_user(user: schemas.user, session: Session = Depends(get_session)):
+    existing_user = session.query(models.User).filter_by(email=user.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    encrypted_password = get_hashed_password(user.password)
+
+    new_user = models.User(username=user.username, email=user.email, password=encrypted_password )
+
+    session.add(new_user)
+    session.commit()
+    session.refresh(new_user)
+
+    return {"message":"user created successfully"}
 
 
 @app.post("/login")
-def login_user(login_req: loginReq):
-    users = get_user_by_email(login_req.email)
-    if not users or not pwd_context.verify(login_req.password,users["password"]):
-        raise HTTPException(status_code=401,detail="Invalid credentials")
-    return {"Message":"Login successful"}
+def login_user(login_req: schemas.loginReq):
+    pass
 
 @app.get("/generateAPIKey")
 def generate_api_key():

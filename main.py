@@ -1,7 +1,11 @@
 # creating a basic api
-from fastapi import FastAPI, HTTPException,Depends, Query, Request,requests,File,UploadFile
+from fastapi import FastAPI, HTTPException,Depends, Query, Request,requests,File,UploadFile,status
+from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 from typing import Optional
 import pandas as pd
+from datetime import datetime,timedelta
+from jose import JWTError,jwt
+# from passlib.context import CryptContext
 import os
 import schemas
 import schemas
@@ -40,6 +44,7 @@ API_KEY = os.getenv("API_KEY")
 def home():
     return {"message":"Welcome to my data API project!"}
 
+#using assignment operator in the path parameters makes it optional
 #about page
 @app.get("/about")
 def about_project():
@@ -148,6 +153,19 @@ def test_get_data():
 
 def get_hashed_password(password):
     return bcrypt.hash(password)
+
+SECRET_KEY = "BSHLANMlnT575K7NKzxCD58mys8Deg58"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+fake_db = {
+    "tim":{
+        "username":"tim",
+        "email":"tim@tim",
+        "hashed_password":"tim",
+        "disabled":False
+    }
+}
 
 @app.post("/register")
 def register_user(user: schemas.user, session: Session = Depends(get_session)):

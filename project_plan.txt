@@ -123,9 +123,10 @@ Once the basic dashboard is ready:
 4. **6-8 Weeks**: Integrate external data sources and implement automated insights.
 
 ---
-
 ### **Next Steps**
 Would you like detailed guidance on:
 - **Architecture**: Designing the backend/frontend interactions for scalability?
 - **Tech Stack**: Specific tools or libraries for any stage?
 - **Feature Implementation**: Code examples for particular features?
+
+Integrating express backend is also a task

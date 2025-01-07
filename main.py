@@ -309,3 +309,6 @@ async def process_csv(file: UploadFile = File(...),db:Session = Depends(get_sess
         # )
     except Exception as e:
         return {"error": str(e)}
+
+
+de
